@@ -1,0 +1,10 @@
+/Users/hj.yoon/Desktop/trader/order-utils/src/main/java/org/example/utils/jpa/service/UserService.java
+/Users/hj.yoon/Desktop/trader/order-utils/src/main/java/org/example/RedisConnector.java
+/Users/hj.yoon/Desktop/trader/order-utils/src/main/java/org/example/utils/jpa/service/OrderService.java
+/Users/hj.yoon/Desktop/trader/order-utils/src/main/java/org/example/DatabaseConnector.java
+/Users/hj.yoon/Desktop/trader/order-utils/src/main/java/org/example/utils/jpa/repository/UserAssetRepository.java
+/Users/hj.yoon/Desktop/trader/order-utils/src/main/java/org/example/utils/jpa/entity/UserAssetEntity.java
+/Users/hj.yoon/Desktop/trader/order-utils/src/main/java/org/example/utils/jpa/entity/OrderEntity.java
+/Users/hj.yoon/Desktop/trader/order-utils/src/main/java/org/example/utils/jpa/repository/OrderRepository.java
+/Users/hj.yoon/Desktop/trader/order-utils/src/main/java/org/example/utils/jpa/repository/UserRepository.java
+/Users/hj.yoon/Desktop/trader/order-utils/src/main/java/org/example/utils/jpa/entity/UserEntity.java
