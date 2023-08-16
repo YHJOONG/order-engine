@@ -12,9 +12,6 @@ import java.util.TreeSet;
 
 @SpringBootApplication
 public class Main {
-    public static SortedSet<Order> gBuyOrders = new TreeSet<>(Comparator.comparing(Order::getPrice).reversed());
-    public static SortedSet<Order> gSellOrders = new TreeSet<>(Comparator.comparing(Order::getPrice).reversed());
-
     public static void main(String[] args) {
         SpringApplication.run(Main.class, args);
     }

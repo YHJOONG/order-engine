@@ -8,19 +8,19 @@ import org.example.OrderStatus;
 import org.example.OrderType;
 import org.example.SideType;
 import org.example.dto.OrderNewRequestDto;
-import org.example.utils.jpa.entity.UserEntity;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @Builder
 @ToString
 public class Order {
-    private Integer orderId;
+    private UUID orderId;
 
-    private String user;
+    private Integer user;
 
     private SideType sideType;
 
@@ -32,7 +32,7 @@ public class Order {
 
     private BigDecimal quantity;
 
-    private Timestamp orderTime;
+    private LocalDateTime orderTime;
 
     private OrderStatus orderStatus;
 
@@ -40,14 +40,20 @@ public class Order {
 
     private BigDecimal tradingFee;
 
+    private UUID matchUUid;
+
     public static Order of(OrderNewRequestDto orderNewRequestDto) {
         return Order.builder()
-                .user("test1")
+                .orderId(UUID.randomUUID())
+                .user(1)
                 .sideType(orderNewRequestDto.getSide())
                 .ordType(orderNewRequestDto.getOrd_type())
                 .market(orderNewRequestDto.getMarket())
                 .price(orderNewRequestDto.getPrice())
                 .quantity(orderNewRequestDto.getVolume())
+                .orderTime(LocalDateTime.now())
+                .executedQuantity(BigDecimal.ZERO)
+                .tradingFee(BigDecimal.ZERO)
                 .orderStatus(OrderStatus.OPEN)
                 .build();
     }
@@ -56,6 +62,7 @@ public class Order {
     public void executeTrade(BigDecimal matchedQuantity, BigDecimal tradingFee){
         this.executedQuantity = this.executedQuantity.add(matchedQuantity);
         this.tradingFee = this.tradingFee.add(tradingFee);
+        this.orderTime = LocalDateTime.now();
     }
 
     // 체결된 수량 만큼 주문 업데이트
@@ -67,6 +74,11 @@ public class Order {
         }else{
             orderStatus = OrderStatus.PARTIALLY_FILLED;
         }
+    }
 
+    public void updateMatchingID(Order order){
+        if(!order.getOrderId().equals(this.orderId)){
+            this.matchUUid = order.getOrderId();
+        }
     }
 }
