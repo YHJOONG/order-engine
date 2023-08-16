@@ -44,5 +44,9 @@ Dockerfile
 
 ### MAC ###
 .DS_Store
-.metadata/
+src/.DS_Store
 src/main/.DS_Store
+src/main/java/.DS_Store
+src/main/java/com/.DS_Store
+src/main/java/com/top/.DS_Store
+src/main/java/com/top/api/.DS_Store
