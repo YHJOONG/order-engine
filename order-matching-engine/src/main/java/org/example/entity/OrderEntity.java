@@ -3,6 +3,7 @@ package org.example.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
 import org.aspectj.weaver.ast.Or;
 import org.example.model.Order;
 import javax.persistence.*;
@@ -14,16 +15,13 @@ import java.util.UUID;
 @Entity
 @Table(name = "orders")
 @Builder
+@Getter
 @AllArgsConstructor
 public class OrderEntity {
 
     @Id
     @Column(name = "order_id")
     private UUID orderId;
-
-//    @ManyToOne
-//    @JoinColumn(name = "user_id")
-//    private UserEntity user;
 
     @Column(name="user_id")
     private Integer userId;

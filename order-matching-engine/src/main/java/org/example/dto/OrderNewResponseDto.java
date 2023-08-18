@@ -41,7 +41,7 @@ public class OrderNewResponseDto {
 
     private BigDecimal locked; // 거래에 사용중인 용
 
-    private String executedVolume; // 체결된 양
+    private BigDecimal executedVolume; // 체결된 양
 
     private Integer tradesCount; // 해당 주문에 걸린 체결 수
 
@@ -54,7 +54,7 @@ public class OrderNewResponseDto {
                 .market(order.getMarket())
                 .createAt(Timestamp.valueOf(LocalDateTime.now()))
                 .volume(order.getQuantity())
-                .remainingVolume(order.getExecutedQuantity())
+                .executedVolume(order.getExecutedQuantity())
                 .build();
     }
 }

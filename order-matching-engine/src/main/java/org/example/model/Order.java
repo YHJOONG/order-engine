@@ -62,7 +62,6 @@ public class Order {
     public void executeTrade(BigDecimal matchedQuantity, BigDecimal tradingFee){
         this.executedQuantity = this.executedQuantity.add(matchedQuantity);
         this.tradingFee = this.tradingFee.add(tradingFee);
-        this.orderTime = LocalDateTime.now();
     }
 
     // 체결된 수량 만큼 주문 업데이트

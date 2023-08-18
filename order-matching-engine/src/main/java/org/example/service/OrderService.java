@@ -36,6 +36,9 @@ public class OrderService {
             // 체결된 주문 정보 저장
             orderSave.orderUpdate(buyOrder);
             orderSave.orderUpdate(sellOrder);
+
+            // 매칭 정보 저장
+            orderSave.orderMatchingSave(buyOrder, sellOrder);
         }
 
         return order;
