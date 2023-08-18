@@ -3,10 +3,11 @@ package org.example.service;
 import org.example.OrderType;
 import org.example.SideType;
 import org.example.model.Order;
-import org.example.model.OrderBook;
+import org.example.model.OrderMatchInfo;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 
 @Service
@@ -20,7 +21,7 @@ public class OrderMatcher {
     }
 
     // 주문 체결 엔진에 주문을 제출하는 메서드
-    public OrderBook submitOrder(Order order) {
+    public OrderMatchInfo submitOrder(Order order) {
         if (order.getSideType() == SideType.bid) {
             buyOrders.add(order);
         } else {
@@ -42,8 +43,8 @@ public class OrderMatcher {
         }
     }
 
-    private OrderBook matchOrders() {
-        OrderBook orderBook = new OrderBook();
+    private OrderMatchInfo matchOrders() {
+        OrderMatchInfo orderMatchInfo = new OrderMatchInfo();
 
         while (!buyOrders.isEmpty() && !sellOrders.isEmpty()) {
             Order buyOrder = buyOrders.peek();
@@ -55,22 +56,22 @@ public class OrderMatcher {
 
             if (buyOrder.getOrdType() == OrderType.market || sellOrder.getOrdType() == OrderType.market) {
                 // 시장가 주문 체결
-                executeMarketOrder(buyOrder, sellOrder, orderBook);
+                executeMarketOrder(buyOrder, sellOrder, orderMatchInfo);
 
             } else if (buyOrder.getOrdType() == OrderType.limit && sellOrder.getOrdType() == OrderType.limit) {
                 // 지정가 주문 체결
                 if (buyOrder.getPrice().compareTo(sellOrder.getPrice()) >= 0) {
-                    executeLimitOrder(buyOrder, sellOrder, orderBook);
+                    executeLimitOrder(buyOrder, sellOrder, orderMatchInfo);
                 } else {
                     break; // 가격이 맞지 않으면 더 이상 체결하지 않음
                 }
             }
         }
-        return orderBook;
+        return orderMatchInfo;
     }
 
     // 시장가 주문
-    private void executeMarketOrder(Order buyOrder, Order sellOrder, OrderBook orderBook){
+    private void executeMarketOrder(Order buyOrder, Order sellOrder, OrderMatchInfo orderMatchInfo){
         BigDecimal quantity = buyOrder.getQuantity().min(sellOrder.getQuantity());
         BigDecimal price = sellOrder.getPrice();
 
@@ -79,11 +80,11 @@ public class OrderMatcher {
         updateOrdersAfterTrade(buyOrder, sellOrder, quantity);
 
         // 체결된 정보 저장
-        orderBook.addMatchedOrder(buyOrder, sellOrder);
+        orderMatchInfo.addMatchedOrder(buyOrder, sellOrder);
     }
 
     // 지정가 주문
-    private void executeLimitOrder(Order buyOrder, Order sellOrder, OrderBook orderBook){
+    private void executeLimitOrder(Order buyOrder, Order sellOrder, OrderMatchInfo orderMatchInfo){
         BigDecimal quantity = buyOrder.getQuantity().min(sellOrder.getQuantity());
         BigDecimal price = sellOrder.getPrice();
 
@@ -92,7 +93,7 @@ public class OrderMatcher {
         updateOrdersAfterTrade(buyOrder, sellOrder, quantity);
 
         // 체결된 정보 저장
-        orderBook.addMatchedOrder(buyOrder, sellOrder);
+        orderMatchInfo.addMatchedOrder(buyOrder, sellOrder);
     }
 
     private void executeTrade(Order buyOrder, Order sellOrder, BigDecimal price, BigDecimal quantity) {
@@ -107,8 +108,9 @@ public class OrderMatcher {
     // 거래 수수료 계산 메서드
     private BigDecimal calculateTradingFee(BigDecimal totalAmount) {
         BigDecimal feePercentage = new BigDecimal("0.05");
-        BigDecimal fee = totalAmount.multiply(feePercentage).divide(new BigDecimal("100"));
-        return fee;
+
+        return totalAmount.multiply(feePercentage)
+                .divide(new BigDecimal("100"), RoundingMode.HALF_UP);
     }
 
 }

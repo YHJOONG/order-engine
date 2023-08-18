@@ -3,14 +3,12 @@ package org.example.model;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
-import org.aspectj.weaver.ast.Or;
 import org.example.OrderStatus;
 import org.example.OrderType;
 import org.example.SideType;
-import org.example.dto.OrderNewRequestDto;
+import org.example.dto.OrderRequestDto;
 
 import java.math.BigDecimal;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -42,15 +40,15 @@ public class Order {
 
     private UUID matchUUid;
 
-    public static Order of(OrderNewRequestDto orderNewRequestDto) {
+    public static Order of(OrderRequestDto orderRequestDto) {
         return Order.builder()
                 .orderId(UUID.randomUUID())
                 .user(1)
-                .sideType(orderNewRequestDto.getSide())
-                .ordType(orderNewRequestDto.getOrd_type())
-                .market(orderNewRequestDto.getMarket())
-                .price(orderNewRequestDto.getPrice())
-                .quantity(orderNewRequestDto.getVolume())
+                .sideType(orderRequestDto.getSide())
+                .ordType(orderRequestDto.getOrd_type())
+                .market(orderRequestDto.getMarket())
+                .price(orderRequestDto.getPrice())
+                .quantity(orderRequestDto.getVolume())
                 .orderTime(LocalDateTime.now())
                 .executedQuantity(BigDecimal.ZERO)
                 .tradingFee(BigDecimal.ZERO)
@@ -75,9 +73,9 @@ public class Order {
         }
     }
 
-    public void updateMatchingID(Order order){
-        if(!order.getOrderId().equals(this.orderId)){
-            this.matchUUid = order.getOrderId();
-        }
-    }
+//    public void updateMatchingID(Order order){
+//        if(!order.getOrderId().equals(this.orderId)){
+//            this.matchUUid = order.getOrderId();
+//        }
+//    }
 }

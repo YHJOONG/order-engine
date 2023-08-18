@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 
 @Data
 @Builder
-public class OrderNewResponseDto {
+public class OrderResponseDto {
 
     private SideType side; // 주문 종류
 
@@ -45,8 +45,8 @@ public class OrderNewResponseDto {
 
     private Integer tradesCount; // 해당 주문에 걸린 체결 수
 
-    public static OrderNewResponseDto of(Order order){
-        return OrderNewResponseDto.builder()
+    public static OrderResponseDto of(Order order){
+        return OrderResponseDto.builder()
                 .side(order.getSideType())
                 .ordType(order.getOrdType())
                 .price(order.getPrice())

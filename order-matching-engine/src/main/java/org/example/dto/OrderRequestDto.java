@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 
 @Data
 @Builder
-public class OrderNewRequestDto {
+public class OrderRequestDto {
     private String market; // 마켓 ID (필수)
 
     private SideType side; // 주문 종류 (필수), bid: 매수, ask: 매도
