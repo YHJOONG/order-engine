@@ -20,15 +20,25 @@ public class OrderController {
     @PostMapping("/orders")
     public ResponseEntity<OrderResponseDto> orders(@RequestBody OrderRequestDto orderRequestDto){
         try {
-            Order order = orderService.createOrder(orderRequestDto);
+            OrderResponseDto orderResponseDto = orderService.addOrder(orderRequestDto);
 
-            return ResponseEntity.ok(OrderResponseDto.of(order));
+            return ResponseEntity.ok(orderResponseDto);
+
+
         } catch (Exception e) {
             // 예외 처리 로직
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
+    @GetMapping("/orderbook")
+    public ResponseEntity<OrderResponseDto> orderbook(){
+        try{
+            orderService.getOrderBook();
 
-
+            return null;
+        }catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 }

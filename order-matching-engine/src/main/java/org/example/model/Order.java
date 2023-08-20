@@ -5,22 +5,23 @@ import lombok.Getter;
 import lombok.ToString;
 import org.example.OrderStatus;
 import org.example.OrderType;
-import org.example.SideType;
+import org.example.Side;
 import org.example.dto.OrderRequestDto;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Getter
 @Builder
 @ToString
-public class Order {
+public class Order implements Comparable<Order> {
     private UUID orderId;
 
     private Integer user;
 
-    private SideType sideType;
+    private Side side;
 
     private OrderType ordType; // 주문 유형 (필수) limit: 지정가 주문 ,price: 시장가 주문 (매수), market: 시장가 주문 (매도)
 
@@ -44,7 +45,7 @@ public class Order {
         return Order.builder()
                 .orderId(UUID.randomUUID())
                 .user(1)
-                .sideType(orderRequestDto.getSide())
+                .side(orderRequestDto.getSide())
                 .ordType(orderRequestDto.getOrd_type())
                 .market(orderRequestDto.getMarket())
                 .price(orderRequestDto.getPrice())
@@ -56,14 +57,8 @@ public class Order {
                 .build();
     }
 
-    // 체결
-    public void executeTrade(BigDecimal matchedQuantity, BigDecimal tradingFee){
-        this.executedQuantity = this.executedQuantity.add(matchedQuantity);
-        this.tradingFee = this.tradingFee.add(tradingFee);
-    }
-
     // 체결된 수량 만큼 주문 업데이트
-    public void updateOrderAfterTrade(BigDecimal executedQuantity){
+    public void executeTrade(BigDecimal executedQuantity){
         this.quantity = this.quantity.subtract(executedQuantity);
 
         if(this.quantity.compareTo(BigDecimal.ZERO) == 0){
@@ -71,11 +66,33 @@ public class Order {
         }else{
             orderStatus = OrderStatus.PARTIALLY_FILLED;
         }
+        this.executedQuantity = this.executedQuantity.add(executedQuantity);
+        this.tradingFee = calculateTradingFee(this.price.multiply(executedQuantity));
     }
 
-//    public void updateMatchingID(Order order){
-//        if(!order.getOrderId().equals(this.orderId)){
-//            this.matchUUid = order.getOrderId();
-//        }
-//    }
+    public void updateOrderAfterTrade(BigDecimal executedQuantity){
+
+    }
+
+    private BigDecimal calculateTradingFee(BigDecimal totalAmount) {
+        BigDecimal feePercentage = new BigDecimal("0.05");
+
+        return totalAmount.multiply(feePercentage)
+                .divide(new BigDecimal("100"), RoundingMode.HALF_UP);
+    }
+
+    /**
+     * Compare to PriorityQueue
+     * @param o the object to be compared.
+     * @return
+     */
+    @Override
+    public int compareTo(Order o) {
+        int priceComparison = this.getPrice().compareTo(o.getPrice());
+        if (priceComparison != 0) {
+            return priceComparison;
+        }
+        return this.getOrderTime().compareTo(o.getOrderTime());
+    }
+
 }

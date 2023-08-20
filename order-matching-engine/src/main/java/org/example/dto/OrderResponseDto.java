@@ -4,18 +4,22 @@ import lombok.Builder;
 import lombok.Data;
 import org.example.OrderStatus;
 import org.example.OrderType;
-import org.example.SideType;
+import org.example.Side;
 import org.example.model.Order;
+import org.example.model.Trade;
 
 import java.math.BigDecimal;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Data
 @Builder
 public class OrderResponseDto {
+    private UUID id;
 
-    private SideType side; // 주문 종류
+    private Side side; // 주문 종류
 
     private OrderType ordType; // 주문 방식
 
@@ -23,11 +27,11 @@ public class OrderResponseDto {
 
     private BigDecimal avgPrice; // 체결 가격의 평균가
 
-    private OrderStatus state; // 주문 상태
+    private OrderStatus status; // 주문 상태
 
     private String market; // 마켓의 유일키
 
-    private Timestamp createAt; // 주문 생성 시간
+    private LocalDateTime createAt; // 주문 생성 시간
 
     private BigDecimal volume; // 사용자가 입력한 주문 양
 
@@ -45,16 +49,39 @@ public class OrderResponseDto {
 
     private Integer tradesCount; // 해당 주문에 걸린 체결 수
 
+    private List<Order> trades;
+
     public static OrderResponseDto of(Order order){
         return OrderResponseDto.builder()
-                .side(order.getSideType())
+                .side(order.getSide())
                 .ordType(order.getOrdType())
                 .price(order.getPrice())
-                .state(order.getOrderStatus())
+                .status(order.getOrderStatus())
                 .market(order.getMarket())
-                .createAt(Timestamp.valueOf(LocalDateTime.now()))
+                .createAt(LocalDateTime.now())
                 .volume(order.getQuantity())
                 .executedVolume(order.getExecutedQuantity())
                 .build();
+    }
+
+    public static OrderResponseDto ofOrder(Order order, List<Trade> trades){
+
+        List<Order> takerTrade = trades.stream()
+                .map(Trade::getMakerOrderId)
+                .collect(Collectors.toList());
+
+        return OrderResponseDto.builder()
+                .id(order.getOrderId())
+                .side(order.getSide())
+                .ordType(order.getOrdType())
+                .price(order.getPrice())
+                .status(order.getOrderStatus())
+                .createAt(order.getOrderTime())
+                .volume(order.getQuantity())
+                .executedVolume(order.getExecutedQuantity())
+                .tradesCount(trades.size())
+                .trades(takerTrade)
+                .build();
+
     }
 }

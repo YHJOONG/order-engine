@@ -4,11 +4,9 @@ package org.example.entity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import org.aspectj.weaver.ast.Or;
 import org.example.model.Order;
 import javax.persistence.*;
 import java.math.BigDecimal;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -67,7 +65,7 @@ public class OrderEntity {
                 .quantity(order.getQuantity())
                 .orderStatus(order.getOrderStatus().toString())
                 .executedQuantity(order.getExecutedQuantity())
-                .sideType(order.getSideType().toString())
+                .sideType(order.getSide().toString())
                 .orderType(order.getOrdType().toString())
                 .tradingFee(order.getTradingFee())
                 .orderTime(order.getOrderTime())

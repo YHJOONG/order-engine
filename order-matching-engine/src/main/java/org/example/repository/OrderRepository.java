@@ -11,6 +11,6 @@ import java.util.UUID;
 
 @Repository
 public interface OrderRepository extends JpaRepository<OrderEntity, UUID> {
-    @Query("SELECT o FROM OrderEntity o LEFT JOIN OrderMatchingEntity m ON o.orderId = m.buyOrder.orderId OR o.orderId = m.sellOrder.orderId WHERE o.orderId = :orderId")
+    @Query("SELECT o FROM OrderEntity o LEFT JOIN OrderMatchingEntity m ON o.orderId = m.makerOrder.orderId OR o.orderId = m.takerOrder.orderId WHERE o.orderId = :orderId")
     List<OrderEntity> findOrderHistoryWithMatching(@Param("orderId") UUID orderId);
 }

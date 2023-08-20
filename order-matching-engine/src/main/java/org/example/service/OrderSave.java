@@ -38,8 +38,8 @@ public class OrderSave {
         orderRepository.save(OrderEntity.toEntity(order));
     }
 
-    public void orderMatchingSave(Order buyOrder, Order sellOrder){
-        orderMatchingRepository.save(OrderMatchingEntity.toEntity(OrderEntity.toEntity(buyOrder), OrderEntity.toEntity(sellOrder)));
+    public void orderMatchingSave(Order makerOrder, Order takerOrder){
+        orderMatchingRepository.save(OrderMatchingEntity.toEntity(OrderEntity.toEntity(makerOrder), OrderEntity.toEntity(takerOrder)));
     }
 
 }

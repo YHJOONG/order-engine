@@ -1,46 +1,49 @@
 package org.example.service;
 
+import org.example.Side;
 import org.example.dto.OrderRequestDto;
+import org.example.dto.OrderResponseDto;
 import org.example.model.Order;
+import org.example.model.OrderBook;
 import org.example.model.OrderMatchInfo;
+import org.example.model.Trade;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
 public class OrderService {
 
-    private final OrderMatcher orderMatcher;
     private final OrderSave orderSave;
 
-    public OrderService(OrderMatcher orderMatcher, OrderSave orderSave) {
-        this.orderMatcher = orderMatcher;
+    private final OrderBook orderBook;
+
+    public OrderService(OrderSave orderSave, OrderBook orderBook) {
         this.orderSave = orderSave;
+        this.orderBook = orderBook;
     }
 
-    public Order createOrder(OrderRequestDto orderRequestDto) {
+    public OrderResponseDto addOrder(OrderRequestDto orderRequestDto){
         Order order = Order.of(orderRequestDto);
         orderSave.orderSave(order);
 
-        // 주문 체결 엔진
-        OrderMatchInfo orderMatchInfo = orderMatcher.submitOrder(order);
+        List<Trade> trades = orderBook.process(order);
 
-        // 매칭 주문 리스트
-        List<OrderMatchInfo.OrderMatch> matchedOrders = orderMatchInfo.getMatchedOrders();
+        for (Trade trade : trades){
+            orderSave.orderUpdate(trade.getTakeOrderId());
+            orderSave.orderUpdate(trade.getMakerOrderId());
+            orderSave.orderMatchingSave(trade.getMakerOrderId(), trade.getTakeOrderId());
 
-        // 주문 정보 저장
-        for (OrderMatchInfo.OrderMatch orderMatch : matchedOrders) {
-            Order buyOrder = orderMatch.getBuyOrder();
-            Order sellOrder = orderMatch.getSellOrder();
-
-            // 체결된 주문 정보 저장
-            orderSave.orderUpdate(buyOrder);
-            orderSave.orderUpdate(sellOrder);
-
-            // 매칭 정보 저장
-            orderSave.orderMatchingSave(buyOrder, sellOrder);
         }
 
-        return order;
+
+        return OrderResponseDto.ofOrder(order, trades);
     }
+
+    public void getOrderBook(){
+        List<Order> sellOrderBook = orderBook.getOrderBook(5, Side.ask);
+        List<Order> buyOrderBook = orderBook.getOrderBook(5, Side.bid);
+    }
+
 }

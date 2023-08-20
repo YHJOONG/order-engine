@@ -3,7 +3,7 @@ package org.example.dto;
 import lombok.Builder;
 import lombok.Data;
 import org.example.OrderType;
-import org.example.SideType;
+import org.example.Side;
 
 import java.math.BigDecimal;
 
@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 public class OrderRequestDto {
     private String market; // 마켓 ID (필수)
 
-    private SideType side; // 주문 종류 (필수), bid: 매수, ask: 매도
+    private Side side; // 주문 종류 (필수), bid: 매수, ask: 매도
 
     private BigDecimal volume; // 주문량 (지정가, 시장가 매도 시 필수)
 

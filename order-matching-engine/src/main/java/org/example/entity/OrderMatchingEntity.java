@@ -20,12 +20,12 @@ public class OrderMatchingEntity {
     private UUID matchId;
 
     @ManyToOne
-    @JoinColumn(name = "buy_order_id")
-    private OrderEntity buyOrder;
+    @JoinColumn(name = "maker_order_id")
+    private OrderEntity makerOrder;
 
     @ManyToOne
-    @JoinColumn(name = "sell_order_id")
-    private OrderEntity sellOrder;
+    @JoinColumn(name = "taker_order_id")
+    private OrderEntity takerOrder;
 
     @Column(name = "match_price")
     private BigDecimal matchPrice;
@@ -40,12 +40,12 @@ public class OrderMatchingEntity {
 
     }
 
-    public static OrderMatchingEntity toEntity(OrderEntity buyOrder, OrderEntity sellOrder){
+    public static OrderMatchingEntity toEntity(OrderEntity makerOrder, OrderEntity takerOrder){
         return OrderMatchingEntity.builder()
-                .buyOrder(buyOrder)
-                .sellOrder(sellOrder)
-                .matchPrice(buyOrder.getPrice())
-                .matchQuantity(buyOrder.getExecutedQuantity().min(sellOrder.getExecutedQuantity()))
+                .makerOrder(makerOrder)
+                .takerOrder(takerOrder)
+                .matchPrice(takerOrder.getPrice())
+                .matchQuantity(takerOrder.getExecutedQuantity())
                 .matchTime(LocalDateTime.now()) // 현재 시간 사용
                 .build();
     }
