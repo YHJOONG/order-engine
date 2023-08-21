@@ -44,57 +44,35 @@ public class OrderBook {
     private synchronized List<Trade> processLimitBuy(Order order) {
         final ArrayList<Trade> trades = new ArrayList<>();
 
-        // Check if at least one matching order.
         if (!sellOrders.isEmpty() && sellOrders.peek().getPrice().compareTo(order.getPrice()) <= 0) {
 
-            // Traverse matching orders
             while (!sellOrders.isEmpty()) {
                 Order sellOrder = sellOrders.peek();
                 if (sellOrder.getPrice().compareTo(order.getPrice()) > 0) {
                     break;
                 }
-                // Fill entire order.
-                if (sellOrder.getQuantity().compareTo(order.getQuantity()) >= 0) {
-                    sellOrder.executeTrade(order.getQuantity());
-                    order.executeTrade(order.getQuantity());
-                    trades.add(Trade.of(order,
-                            sellOrder,
-                            order.getExecutedQuantity(),
-                            sellOrder.getPrice())
-                    );
 
-                    System.out.println(sellOrder.toString());
-                    System.out.println(order.toString());
+                BigDecimal maxQuantityToTrade = sellOrder.getQuantity().min(order.getQuantity());
 
-                    if (sellOrder.getQuantity().compareTo(BigDecimal.ZERO) == 0) {
-                        sellOrders.poll(); // Remove the order if it's completely filled.
-                    }
-                    this.lastPrice = sellOrder.getPrice();
+                sellOrder.executeTrade(maxQuantityToTrade);
+                order.executeTrade(maxQuantityToTrade);
 
-                    return trades;
+                trades.add(Trade.of(order,
+                        sellOrder,
+                        maxQuantityToTrade,
+                        sellOrder.getPrice()));
+
+                if (sellOrder.getQuantity().compareTo(BigDecimal.ZERO) == 0) {
+                    sellOrders.poll();
                 }
+                this.lastPrice = sellOrder.getPrice();
 
-                // Fill partial order & continue.
-                else {
-                    order.executeTrade(sellOrder.getQuantity());
-                    sellOrder.executeTrade(sellOrder.getQuantity());
-
-                    trades.add(Trade.of(order,
-                            sellOrder,
-                            sellOrder.getExecutedQuantity(),
-                            sellOrder.getPrice())
-                    );
-
-                    sellOrders.poll(); // Remove the order since it's completely filled.
-
-                    this.lastPrice = sellOrder.getPrice();
-
-                    continue;
+                if (order.getQuantity().compareTo(BigDecimal.ZERO) == 0) {
+                    return trades;
                 }
             }
         }
 
-        // Add remaining order to book.
         buyOrders.add(order);
 
         return trades;
@@ -104,10 +82,8 @@ public class OrderBook {
     private synchronized List<Trade> processLimitSell(Order order) {
         final ArrayList<Trade> trades = new ArrayList<>();
 
-        // Check if there is at least one matching order.
         if (!buyOrders.isEmpty() && buyOrders.peek().getPrice().compareTo(order.getPrice()) >= 0) {
 
-            // Traverse all matching orders.
             while (!buyOrders.isEmpty()) {
                 final Order buyOrder = buyOrders.peek();
 
@@ -115,49 +91,94 @@ public class OrderBook {
                     break;
                 }
 
-                if(buyOrder.getPrice().compareTo(order.getPrice()) >= 0){
-                    // Fill entire order.
-                    if (buyOrder.getQuantity().compareTo(order.getQuantity()) >= 0) {
-                        buyOrder.executeTrade(order.getQuantity());
-                        order.executeTrade(order.getQuantity());
+                BigDecimal maxQuantityToTrade = buyOrder.getQuantity().min(order.getQuantity());
 
-                        trades.add(Trade.of(order,
-                                buyOrder,
-                                order.getExecutedQuantity(),
-                                buyOrder.getPrice())
-                        );
+                buyOrder.executeTrade(maxQuantityToTrade);
+                order.executeTrade(maxQuantityToTrade);
 
-                        if (buyOrder.getQuantity().compareTo(BigDecimal.ZERO) == 0) {
-                            buyOrders.poll();
-                        }
+                trades.add(Trade.of(order,
+                        buyOrder,
+                        maxQuantityToTrade,
+                        buyOrder.getPrice()));
 
-                        this.lastPrice = buyOrder.getPrice();
+                if (buyOrder.getQuantity().compareTo(BigDecimal.ZERO) == 0) {
+                    buyOrders.poll();
+                }
+                this.lastPrice = buyOrder.getPrice();
 
-                        return trades;
-                    }
-
-                    // Fill partial order and continue.
-                    else {
-                        order.executeTrade(buyOrder.getQuantity());
-                        buyOrder.executeTrade(buyOrder.getQuantity());
-
-                        trades.add(Trade.of(order,
-                                buyOrder,
-                                buyOrder.getExecutedQuantity(),
-                                buyOrder.getPrice())
-                        );
-
-                        buyOrders.poll(); // Remove the order since it's completely filled.
-
-                        this.lastPrice = buyOrder.getPrice();
-
-                        continue;
-                    }
+                if (order.getQuantity().compareTo(BigDecimal.ZERO) == 0) {
+                    return trades;
                 }
             }
         }
 
         sellOrders.add(order);
+
+        return trades;
+    }
+
+    private synchronized List<Trade> processMarketBuy(Order order) {
+        final ArrayList<Trade> trades = new ArrayList<>();
+
+        // Check if there are any matching sell orders.
+        while (!sellOrders.isEmpty() && order.getQuantity().compareTo(BigDecimal.ZERO) > 0) {
+            Order sellOrder = sellOrders.peek();
+
+            // Calculate the maximum quantity that can be traded.
+            BigDecimal maxQuantityToTrade = sellOrder.getQuantity().min(order.getQuantity());
+
+            // Execute the trade.
+            sellOrder.executeTrade(maxQuantityToTrade);
+            order.executeTrade(maxQuantityToTrade);
+
+            trades.add(Trade.of(order,
+                    sellOrder,
+                    maxQuantityToTrade,
+                    sellOrder.getPrice()));
+
+            if (sellOrder.getQuantity().compareTo(BigDecimal.ZERO) == 0) {
+                sellOrders.poll(); // Remove the order if it's completely filled.
+            }
+            this.lastPrice = sellOrder.getPrice();
+        }
+
+        // If there is any remaining quantity, add the order to the buy orders.
+        if (order.getQuantity().compareTo(BigDecimal.ZERO) > 0) {
+            buyOrders.add(order);
+        }
+
+        return trades;
+    }
+
+    private synchronized List<Trade> processMarketSell(Order order) {
+        final ArrayList<Trade> trades = new ArrayList<>();
+
+        // Check if there are any matching buy orders.
+        while (!buyOrders.isEmpty() && order.getQuantity().compareTo(BigDecimal.ZERO) > 0) {
+            Order buyOrder = buyOrders.peek();
+
+            // Calculate the maximum quantity that can be traded.
+            BigDecimal maxQuantityToTrade = buyOrder.getQuantity().min(order.getQuantity());
+
+            // Execute the trade.
+            buyOrder.executeTrade(maxQuantityToTrade);
+            order.executeTrade(maxQuantityToTrade);
+
+            trades.add(Trade.of(order,
+                    buyOrder,
+                    maxQuantityToTrade,
+                    buyOrder.getPrice()));
+
+            if (buyOrder.getQuantity().compareTo(BigDecimal.ZERO) == 0) {
+                buyOrders.poll(); // Remove the order if it's completely filled.
+            }
+            this.lastPrice = buyOrder.getPrice();
+        }
+
+        // If there is any remaining quantity, add the order to the sell orders.
+        if (order.getQuantity().compareTo(BigDecimal.ZERO) > 0) {
+            sellOrders.add(order);
+        }
 
         return trades;
     }
@@ -225,7 +246,6 @@ public class OrderBook {
         return buyOrderBook;
     }
 
-
     private synchronized List<Order> buyOrderBooks(int depth) {
         List<Order> sellOrderBook = new ArrayList<>();
         Iterator<Order> iterator = this.sellOrders.iterator();
@@ -236,6 +256,4 @@ public class OrderBook {
         }
         return sellOrderBook;
     }
-
-
 }
