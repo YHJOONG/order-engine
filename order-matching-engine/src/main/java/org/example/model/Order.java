@@ -67,6 +67,8 @@ public class Order implements Comparable<Order> {
             orderStatus = OrderStatus.PARTIALLY_FILLED;
         }
         this.executedQuantity = this.executedQuantity.add(executedQuantity);
+
+
         this.tradingFee = calculateTradingFee(this.price.multiply(executedQuantity));
     }
 

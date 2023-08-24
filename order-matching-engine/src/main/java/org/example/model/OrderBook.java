@@ -1,5 +1,6 @@
 package org.example.model;
 
+import org.example.OrderType;
 import org.example.Side;
 import org.springframework.stereotype.Component;
 
@@ -34,10 +35,18 @@ public class OrderBook {
 
 
     public synchronized List<Trade> process(Order order){
-        if(order.getSide() == Side.bid){
-            return this.processLimitBuy(order);
+        if(order.getOrdType() == OrderType.limit){
+            if(order.getSide() == Side.bid){
+                return this.processLimitBuy(order);
+            }else{
+                return this.processLimitSell(order);
+            }
         }else{
-            return this.processLimitSell(order);
+            if(order.getSide() == Side.bid){
+                return this.processMarketBuy(order);
+            }else{
+                return this.processMarketSell(order);
+            }
         }
     }
 
@@ -120,14 +129,11 @@ public class OrderBook {
     private synchronized List<Trade> processMarketBuy(Order order) {
         final ArrayList<Trade> trades = new ArrayList<>();
 
-        // Check if there are any matching sell orders.
         while (!sellOrders.isEmpty() && order.getQuantity().compareTo(BigDecimal.ZERO) > 0) {
             Order sellOrder = sellOrders.peek();
 
-            // Calculate the maximum quantity that can be traded.
             BigDecimal maxQuantityToTrade = sellOrder.getQuantity().min(order.getQuantity());
 
-            // Execute the trade.
             sellOrder.executeTrade(maxQuantityToTrade);
             order.executeTrade(maxQuantityToTrade);
 
@@ -142,7 +148,6 @@ public class OrderBook {
             this.lastPrice = sellOrder.getPrice();
         }
 
-        // If there is any remaining quantity, add the order to the buy orders.
         if (order.getQuantity().compareTo(BigDecimal.ZERO) > 0) {
             buyOrders.add(order);
         }

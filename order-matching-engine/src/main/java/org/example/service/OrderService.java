@@ -10,7 +10,9 @@ import org.example.model.Trade;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class OrderService {
@@ -41,9 +43,15 @@ public class OrderService {
         return OrderResponseDto.ofOrder(order, trades);
     }
 
-    public void getOrderBook(){
+    public Map<Side, List<Order>> getOrderBook(){
         List<Order> sellOrderBook = orderBook.getOrderBook(5, Side.ask);
         List<Order> buyOrderBook = orderBook.getOrderBook(5, Side.bid);
+
+        Map<Side, List<Order>> orderBooks = new HashMap<>();
+        orderBooks.put(Side.ask, sellOrderBook);
+        orderBooks.put(Side.bid, buyOrderBook);
+
+        return orderBooks;
     }
 
 }
