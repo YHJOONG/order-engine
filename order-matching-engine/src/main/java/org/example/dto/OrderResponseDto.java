@@ -9,6 +9,7 @@ import org.example.model.Order;
 import org.example.model.Trade;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -51,33 +52,24 @@ public class OrderResponseDto {
 
     private List<Order> trades;
 
-    public static OrderResponseDto of(Order order){
-        return OrderResponseDto.builder()
-                .side(order.getSide())
-                .ordType(order.getOrdType())
-                .price(order.getPrice())
-                .status(order.getOrderStatus())
-                .market(order.getMarket())
-                .createAt(LocalDateTime.now())
-                .volume(order.getQuantity())
-                .executedVolume(order.getExecutedQuantity())
-                .build();
-    }
-
     public static OrderResponseDto ofOrder(Order order, List<Trade> trades){
 
         List<Order> takerTrade = trades.stream()
                 .map(Trade::getMakerOrderId)
                 .collect(Collectors.toList());
 
+        BigDecimal totalQuantity = order.getQuantity().add(order.getExecutedQuantity());
+
         return OrderResponseDto.builder()
                 .id(order.getOrderId())
                 .side(order.getSide())
                 .ordType(order.getOrdType())
                 .price(order.getPrice())
+                .avgPrice(getAveragePrice(trades))
                 .status(order.getOrderStatus())
                 .createAt(order.getOrderTime())
-                .volume(order.getQuantity())
+                .volume(totalQuantity)
+                .remainingVolume(totalQuantity.subtract(order.getExecutedQuantity()))
                 .executedVolume(order.getExecutedQuantity())
                 .tradesCount(trades.size())
                 .trades(takerTrade)
@@ -109,5 +101,16 @@ public class OrderResponseDto {
                 .volume(order.getQuantity())
                 .executedVolume(order.getExecutedQuantity())
                 .build();
+    }
+
+    private static BigDecimal getAveragePrice(List<Trade> trades) {
+        if (trades.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+
+        return trades.stream()
+                .map(Trade::getPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .divide(BigDecimal.valueOf(trades.size()), 2, RoundingMode.HALF_UP);
     }
 }

@@ -39,8 +39,6 @@ public class Order implements Comparable<Order> {
 
     private BigDecimal tradingFee;
 
-    private UUID matchUUid;
-
     public static Order of(OrderRequestDto orderRequestDto) {
         return Order.builder()
                 .orderId(UUID.randomUUID())
@@ -77,10 +75,6 @@ public class Order implements Comparable<Order> {
         this.price = order.getPrice();
     }
 
-    public void updateOrderAfterTrade(BigDecimal executedQuantity){
-
-    }
-
     private BigDecimal calculateTradingFee(BigDecimal totalAmount) {
         BigDecimal feePercentage = new BigDecimal("0.05");
 
@@ -91,7 +85,6 @@ public class Order implements Comparable<Order> {
     /**
      * Compare to PriorityQueue
      * @param o the object to be compared.
-     * @return
      */
     @Override
     public int compareTo(Order o) {
