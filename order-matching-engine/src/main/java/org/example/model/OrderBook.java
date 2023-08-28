@@ -20,6 +20,10 @@ public class OrderBook {
     private final PriorityQueue<Order> sellOrders;
 
     /**
+     * 주문 맵
+     */
+    private final Map<UUID, Order> orderMap;
+    /**
      * Last Price.
      */
     private BigDecimal lastPrice;
@@ -29,12 +33,16 @@ public class OrderBook {
      * 생성자
      */
     public OrderBook() {
+        this.orderMap = new HashMap<>();
         this.buyOrders = new PriorityQueue<>(Comparator.comparing(Order::getPrice).reversed());
         this.sellOrders = new PriorityQueue<>(Comparator.comparing(Order::getPrice));
     }
 
 
     public synchronized List<Trade> process(Order order){
+        // Add the order to the orderMap
+        orderMap.put(order.getOrderId(), order);
+
         if(order.getOrdType() == OrderType.limit){
             if(order.getSide() == Side.bid){
                 return this.processLimitBuy(order);
@@ -188,47 +196,38 @@ public class OrderBook {
         return trades;
     }
 
-    public synchronized Order findOrder(String id,
-                                        Side side) {
-        PriorityQueue<Order> toSearch;
-        if (side == Side.bid) {
-            toSearch = this.buyOrders;
-        } else {
-            toSearch = this.sellOrders;
-        }
-        return toSearch.stream().filter(order -> order.getOrderId().equals(id))
-                .findFirst().orElse(null);
+    public synchronized Order findOrder(UUID id) {
+        return orderMap.get(id);
     }
 
-    public synchronized boolean cancelOrder(String orderId,
-                                            Side side) {
-        if (side == Side.bid) {
+    public synchronized Order cancelOrder(UUID orderId) {
+        Order canceledOrder = orderMap.get(orderId);
+
+        if (canceledOrder == null) {
+            return null;
+        }
+
+        if (canceledOrder.getSide() == Side.bid) {
             // Search buy orders.
-            return this.cancel(orderId, this.buyOrders);
-        } else if (side == Side.ask) {
+            return this.cancel(canceledOrder, this.buyOrders);
+        } else if (canceledOrder.getSide() == Side.ask) {
             // Search sell orders.
-            return this.cancel(orderId, this.sellOrders);
+            return this.cancel(canceledOrder, this.sellOrders);
         } else {
-            return false;
+            return null;
         }
     }
 
-    private synchronized boolean cancel(String orderId,
+    private synchronized Order cancel(Order canceledOrder,
                                         PriorityQueue<Order> orderBook) {
-        // 요소를 저장할 임시 큐를 생성
-        PriorityQueue<Order> tempQueue = new PriorityQueue<>(orderBook);
+        boolean removed = orderBook.remove(canceledOrder);
 
-        // 임시 큐에서 요소를 하나씩 꺼내면서 orderId와 비교하여 삭제 여부 결정
-        while (!tempQueue.isEmpty()) {
-            Order currentOrder = tempQueue.poll();
-            if (currentOrder.getOrderId().equals(orderId)) {
-                // 원본 큐에서도 해당 요소를 삭제
-                orderBook.remove(currentOrder);
-                return true;
-            }
+        if(removed){
+            orderMap.remove(canceledOrder.getOrderId());
+            return canceledOrder;
+        }else{
+            return null;
         }
-
-        return false;
     }
 
     public synchronized List<Order> getOrderBook(int depth,

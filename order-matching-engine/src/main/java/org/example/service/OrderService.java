@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class OrderService {
@@ -36,22 +37,31 @@ public class OrderService {
             orderSave.orderUpdate(trade.getTakeOrderId());
             orderSave.orderUpdate(trade.getMakerOrderId());
             orderSave.orderMatchingSave(trade.getMakerOrderId(), trade.getTakeOrderId());
-
         }
-
 
         return OrderResponseDto.ofOrder(order, trades);
     }
 
     public Map<Side, List<Order>> getOrderBook(){
-        List<Order> sellOrderBook = orderBook.getOrderBook(5, Side.ask);
-        List<Order> buyOrderBook = orderBook.getOrderBook(5, Side.bid);
+        List<Order> buyOrderBook = orderBook.getOrderBook(5, Side.ask);
+        List<Order> sellOrderBook = orderBook.getOrderBook(5, Side.bid);
 
         Map<Side, List<Order>> orderBooks = new HashMap<>();
-        orderBooks.put(Side.ask, sellOrderBook);
         orderBooks.put(Side.bid, buyOrderBook);
+        orderBooks.put(Side.ask, sellOrderBook);
 
         return orderBooks;
     }
 
+    public OrderResponseDto findOrder(UUID uuid) {
+        Order order = orderBook.findOrder(uuid);
+
+        return OrderResponseDto.ofFindOrder(order);
+    }
+
+    public OrderResponseDto deleteOrder(UUID uuid) {
+        Order order = orderBook.cancelOrder(uuid);
+
+        return OrderResponseDto.ofDeleteOrder(order);
+    }
 }

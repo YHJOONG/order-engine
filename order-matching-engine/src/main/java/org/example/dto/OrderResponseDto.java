@@ -84,4 +84,30 @@ public class OrderResponseDto {
                 .build();
 
     }
+
+    public static OrderResponseDto ofFindOrder(Order order){
+        return OrderResponseDto.builder()
+                .id(order.getOrderId())
+                .side(order.getSide())
+                .ordType(order.getOrdType())
+                .price(order.getPrice())
+                .status(order.getOrderStatus())
+                .createAt(order.getOrderTime())
+                .volume(order.getQuantity())
+                .executedVolume(order.getExecutedQuantity())
+                .build();
+    }
+
+    public static OrderResponseDto ofDeleteOrder(Order order) {
+        return OrderResponseDto.builder()
+                .id(order.getOrderId())
+                .side(order.getSide())
+                .ordType(order.getOrdType())
+                .price(order.getPrice())
+                .status(order.getOrderStatus())
+                .createAt(order.getOrderTime())
+                .volume(order.getQuantity())
+                .executedVolume(order.getExecutedQuantity())
+                .build();
+    }
 }
