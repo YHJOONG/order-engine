@@ -61,75 +61,72 @@ public class OrderBook {
     private synchronized List<Trade> processLimitBuy(Order order) {
         final ArrayList<Trade> trades = new ArrayList<>();
 
-        if (!sellOrders.isEmpty() && sellOrders.peek().getPrice().compareTo(order.getPrice()) <= 0) {
+        while (!sellOrders.isEmpty() && order.getQuantity().compareTo(BigDecimal.ZERO) > 0) {
+            Order sellOrder = sellOrders.peek();
+            BigDecimal maxQuantityToTrade = sellOrder.getQuantity().min(order.getQuantity());
 
-            while (!sellOrders.isEmpty()) {
-                Order sellOrder = sellOrders.peek();
-                if (sellOrder.getPrice().compareTo(order.getPrice()) > 0) {
-                    break;
-                }
+            // 주문 객체의 가격 필드가 null 또는 특별한 값인 경우, 현재 시장 가격을 가져옵니다.
+            // 마켓 체결 가격 설정
+            order.setMarketPrice(sellOrder);
 
-                BigDecimal maxQuantityToTrade = sellOrder.getQuantity().min(order.getQuantity());
+            sellOrder.executeTrade(maxQuantityToTrade);
+            order.executeTrade(maxQuantityToTrade);
 
-                sellOrder.executeTrade(maxQuantityToTrade);
-                order.executeTrade(maxQuantityToTrade);
+            trades.add(Trade.of(order,
+                    sellOrder,
+                    maxQuantityToTrade,
+                    sellOrder.getPrice()));
 
-                trades.add(Trade.of(order,
-                        sellOrder,
-                        maxQuantityToTrade,
-                        sellOrder.getPrice()));
-
-                if (sellOrder.getQuantity().compareTo(BigDecimal.ZERO) == 0) {
-                    sellOrders.poll();
-                }
-                this.lastPrice = sellOrder.getPrice();
-
-                if (order.getQuantity().compareTo(BigDecimal.ZERO) == 0) {
-                    return trades;
-                }
+            if (sellOrder.getQuantity().compareTo(BigDecimal.ZERO) == 0) {
+                sellOrders.poll(); // 매도 주문이 완전히 체결되면 주문서에서 제거합니다.
             }
+
+            // 체결된 매도 주문의 가격을 설정합니다.
+            this.lastPrice = sellOrder.getPrice();
         }
 
-        buyOrders.add(order);
+        // 남은 주문을 buyOrders에 추가합니다.
+        if (order.getQuantity().compareTo(BigDecimal.ZERO) > 0) {
+            buyOrders.add(order);
+        }
 
         return trades;
+
     }
 
 
     private synchronized List<Trade> processLimitSell(Order order) {
+
         final ArrayList<Trade> trades = new ArrayList<>();
 
-        if (!buyOrders.isEmpty() && buyOrders.peek().getPrice().compareTo(order.getPrice()) >= 0) {
+        while (!buyOrders.isEmpty() && order.getQuantity().compareTo(BigDecimal.ZERO) > 0) {
+            Order buyOrder = buyOrders.peek();
+            BigDecimal maxQuantityToTrade = buyOrder.getQuantity().min(order.getQuantity());
 
-            while (!buyOrders.isEmpty()) {
-                final Order buyOrder = buyOrders.peek();
+            // 주문 객체의 가격 필드가 null 또는 특별한 값인 경우, 현재 시장 가격을 가져옵니다.
+            // 마켓 체결 가격 설정
+            order.setMarketPrice(buyOrder);
 
-                if (buyOrder.getPrice().compareTo(order.getPrice()) < 0) {
-                    break;
-                }
+            buyOrder.executeTrade(maxQuantityToTrade);
+            order.executeTrade(maxQuantityToTrade);
 
-                BigDecimal maxQuantityToTrade = buyOrder.getQuantity().min(order.getQuantity());
+            trades.add(Trade.of(order,
+                    buyOrder,
+                    maxQuantityToTrade,
+                    buyOrder.getPrice()));
 
-                buyOrder.executeTrade(maxQuantityToTrade);
-                order.executeTrade(maxQuantityToTrade);
-
-                trades.add(Trade.of(order,
-                        buyOrder,
-                        maxQuantityToTrade,
-                        buyOrder.getPrice()));
-
-                if (buyOrder.getQuantity().compareTo(BigDecimal.ZERO) == 0) {
-                    buyOrders.poll();
-                }
-                this.lastPrice = buyOrder.getPrice();
-
-                if (order.getQuantity().compareTo(BigDecimal.ZERO) == 0) {
-                    return trades;
-                }
+            if (buyOrder.getQuantity().compareTo(BigDecimal.ZERO) == 0) {
+                buyOrders.poll(); // 매수 주문이 완전히 체결되면 주문서에서 제거합니다.
             }
+
+            // 체결된 매수 주문의 가격을 설정합니다.
+            this.lastPrice = buyOrder.getPrice();
         }
 
-        sellOrders.add(order);
+        // 남은 주문을 sellOrders 추가합니다.
+        if (order.getQuantity().compareTo(BigDecimal.ZERO) > 0) {
+            sellOrders.add(order);
+        }
 
         return trades;
     }

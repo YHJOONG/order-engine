@@ -59,6 +59,7 @@ public class Order implements Comparable<Order> {
 
     // 체결된 수량 만큼 주문 업데이트
     public void executeTrade(BigDecimal executedQuantity){
+
         this.quantity = this.quantity.subtract(executedQuantity);
 
         if(this.quantity.compareTo(BigDecimal.ZERO) == 0){
@@ -70,6 +71,10 @@ public class Order implements Comparable<Order> {
 
 
         this.tradingFee = calculateTradingFee(this.price.multiply(executedQuantity));
+    }
+
+    public void setMarketPrice(Order order){
+        this.price = order.getPrice();
     }
 
     public void updateOrderAfterTrade(BigDecimal executedQuantity){
