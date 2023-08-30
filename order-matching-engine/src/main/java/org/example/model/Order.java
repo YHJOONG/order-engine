@@ -17,28 +17,44 @@ import java.util.UUID;
 @Builder
 @ToString
 public class Order implements Comparable<Order> {
+    // 주문 번호
     private UUID orderId;
 
+    // user id
     private Integer user;
 
+    // 주문 종류 (bid: 매수, ask: 매도)
     private Side side;
 
-    private OrderType ordType; // 주문 유형 (필수) limit: 지정가 주문 ,price: 시장가 주문 (매수), market: 시장가 주문 (매도)
+    // 주문 유형 (limit: 지정가 주문, market: 시장가 주문)
+    private OrderType ordType;
 
-    private String market; // 마켓 ID 필수
+    // 마켓 ID 필수
+    private String market;
 
+    // 주문 금액
     private BigDecimal price;
 
+    // 주문 수량
     private BigDecimal quantity;
 
+    // 주문 시간
     private LocalDateTime orderTime;
 
+    // 주문 상태
     private OrderStatus orderStatus;
 
+    // 체결된 양
     private BigDecimal executedQuantity;
 
+    // 체결 수수료
     private BigDecimal tradingFee;
 
+    /**
+     * Order 클래스 생성
+     * @param orderRequestDto 주문 요청 정보를 포함한 DTO
+     * @return 생성된 order 객체
+     */
     public static Order of(OrderRequestDto orderRequestDto) {
         return Order.builder()
                 .orderId(UUID.randomUUID())
@@ -55,7 +71,10 @@ public class Order implements Comparable<Order> {
                 .build();
     }
 
-    // 체결된 수량 만큼 주문 업데이트
+    /**
+     * 주문이 체결 되었을 때 때 주문 정보를 업데이트
+     * @param executedQuantity 체결된 수량
+     */
     public void executeTrade(BigDecimal executedQuantity){
 
         this.quantity = this.quantity.subtract(executedQuantity);
@@ -71,20 +90,33 @@ public class Order implements Comparable<Order> {
         this.tradingFee = calculateTradingFee(this.price.multiply(executedQuantity));
     }
 
+    /**
+     * 주문의 시장가 금액을 설정
+     * @param order 시장가를 설정하는 주문
+     */
     public void setMarketPrice(Order order){
         this.price = order.getPrice();
     }
 
+    /**
+     * 주어진 거래 금액을 기반으로 수수료를 계산
+     * @param totalAmount 계산할 거래 금액
+     * @return 계산된 수수료 금액
+     */
     private BigDecimal calculateTradingFee(BigDecimal totalAmount) {
+        // 수수료 비율은 0.05%로 설정
         BigDecimal feePercentage = new BigDecimal("0.05");
 
+        // 주어진 금액에 수수료 비율을 적용하고, 소수점을 반올림하여 수수료를 계산
         return totalAmount.multiply(feePercentage)
                 .divide(new BigDecimal("100"), RoundingMode.HALF_UP);
     }
 
     /**
-     * Compare to PriorityQueue
-     * @param o the object to be compared.
+     * Order 객체를 다른 Order 객체와 가격 및 주문 시간을 기준으로 비교
+     *
+     * @param o 비교할 다른 Order 객체
+     * @return 비교 결과에 따른 정수 값
      */
     @Override
     public int compareTo(Order o) {
@@ -94,5 +126,4 @@ public class Order implements Comparable<Order> {
         }
         return this.getOrderTime().compareTo(o.getOrderTime());
     }
-
 }

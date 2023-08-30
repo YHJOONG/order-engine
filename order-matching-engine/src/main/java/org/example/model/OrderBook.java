@@ -9,23 +9,17 @@ import java.util.*;
 
 @Component
 public class OrderBook {
-    /**
-     * 매수 주문 리스트
-     */
+
+    // 매수 주문 리스트
     private final PriorityQueue<Order> buyOrders;
 
-    /**
-     * 매도 주문 리스트
-     */
+    // 매도 주문 리스트
     private final PriorityQueue<Order> sellOrders;
 
-    /**
-     * 주문 맵
-     */
+    // 주문 정보 저장 맵
     private final Map<UUID, Order> orderMap;
-    /**
-     * Last Price.
-     */
+
+    // 최근 체결된 금액
     private BigDecimal lastPrice;
 
 
@@ -39,17 +33,23 @@ public class OrderBook {
     }
 
 
+    /**
+     * 주문 체결 프로세스
+     * @param order 주문 객체
+     * @return 체결 정보 리스트
+     */
     public synchronized List<Trade> process(Order order){
-        // Add the order to the orderMap
+        // 주문 정보 저장 맵
         orderMap.put(order.getOrderId(), order);
 
+        // 지정가 주문
         if(order.getOrdType() == OrderType.limit){
             if(order.getSide() == Side.bid){
                 return this.processLimitBuy(order);
             }else{
                 return this.processLimitSell(order);
             }
-        }else{
+        }else{ // 시장가 주문
             if(order.getSide() == Side.bid){
                 return this.processMarketBuy(order);
             }else{
@@ -58,13 +58,22 @@ public class OrderBook {
         }
     }
 
+    /**
+     * 지정가 매수 주문을 처리
+     * @param order 처리할 주문
+     * @return 처리된 체결 목록
+     */
     private synchronized List<Trade> processLimitBuy(Order order) {
         final ArrayList<Trade> trades = new ArrayList<>();
 
+        // 매도 리스트 체크 및 가장 저렴한 매도 주문의 가격이 현재 주문의 가격보다 작거나 같을 경우
         if (!sellOrders.isEmpty() && sellOrders.peek().getPrice().compareTo(order.getPrice()) <= 0) {
 
+            // 현재 주문과 가장 저렴한 매도 주문을 비교하여 처리
             while (!sellOrders.isEmpty()) {
                 Order sellOrder = sellOrders.peek();
+
+                // 현재 매도 주문의 가격이 주문의 가격보다 높으면 루프 종류
                 if (sellOrder.getPrice().compareTo(order.getPrice()) > 0) {
                     break;
                 }
@@ -79,6 +88,7 @@ public class OrderBook {
                         maxQuantityToTrade,
                         sellOrder.getPrice()));
 
+                // 매도 주문이 완전히 체결되면 주문서에서 제거
                 if (sellOrder.getQuantity().compareTo(BigDecimal.ZERO) == 0) {
                     sellOrders.poll();
                 }
@@ -90,26 +100,36 @@ public class OrderBook {
             }
         }
 
+        // 남은 주문을 buyOrders에 추가
         buyOrders.add(order);
 
         return trades;
     }
 
 
+    /**
+     * 지정가 매도 주문을 처리
+     * @param order 처리할 주문
+     * @return 처리된 체결 목록
+     */
     private synchronized List<Trade> processLimitSell(Order order) {
         final ArrayList<Trade> trades = new ArrayList<>();
 
+        // 매수 주문 리스트 체크 및 가장 높은 주문의 가격이 현재 주문의 가격보다 크거나 같을 경우
         if (!buyOrders.isEmpty() && buyOrders.peek().getPrice().compareTo(order.getPrice()) >= 0) {
 
+            // 현재 주문과 가장 높은 매수 주문을 비교하며 처리
             while (!buyOrders.isEmpty()) {
                 final Order buyOrder = buyOrders.peek();
 
+                // 현재 매수 주문이 현재 주문의 가격보다 낮으면 종료
                 if (buyOrder.getPrice().compareTo(order.getPrice()) < 0) {
                     break;
                 }
 
                 BigDecimal maxQuantityToTrade = buyOrder.getQuantity().min(order.getQuantity());
 
+                // 주문 실행 및 체결 정보 생성
                 buyOrder.executeTrade(maxQuantityToTrade);
                 order.executeTrade(maxQuantityToTrade);
 
@@ -129,6 +149,7 @@ public class OrderBook {
             }
         }
 
+        // 남은 주문을 sellOrders 추가합니다.
         sellOrders.add(order);
 
         return trades;
